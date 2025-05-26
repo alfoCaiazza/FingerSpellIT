@@ -1,2 +1,6 @@
 #Virtual Environment
 .fingerspellit
+
+src/data/csv
+src/data/processed_imgs
+src/data/raw_imgs
