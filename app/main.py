@@ -20,6 +20,9 @@ class LandmarkInput(BaseModel):
 @app.post("/predict_landmarks")
 def predict_landmarks(data: LandmarkInput):
     try:
+        if len(data.landmarks) != 63:
+            raise HTTPException(status_code=400, detail="Expected 42 values for landmarks.")
+        
         input_array = np.array(data.landmarks).reshape(1,-1)
         input_scaled = scaler.transform(input_array)
 
