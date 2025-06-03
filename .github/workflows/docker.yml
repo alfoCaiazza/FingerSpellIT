@@ -28,7 +28,6 @@ jobs:
         with:
           context: .
           push: true
-          tags: acaia/fingerspellit-api:latest
+          tags: alfocaiazza/fingerspellit-api:latest
 
 
-          
