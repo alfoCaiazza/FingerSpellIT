@@ -29,3 +29,6 @@ jobs:
           context: .
           push: true
           tags: acaia/fingerspellit-api:latest
+
+
+          
