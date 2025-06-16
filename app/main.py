@@ -11,7 +11,8 @@ try:
     model = keras.models.load_model('src/models/augmented_andmark_model_v1.keras')
     scaler = joblib.load('src/artifacts/csv_model/augmented/scaler.pkl')
 
-    labels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'K', 'L', 'M','N','O','P','Q','R','S','T','U','V','X','Y'] 
+    label_encoder = joblib.load('src/artifacts/csv_model/augmented/label_encoder.pkl')
+    labels = label_encoder.classes_.tolist()
 except Exception as e:
     raise RuntimeError(f"Error in loading model: {e}")
 
