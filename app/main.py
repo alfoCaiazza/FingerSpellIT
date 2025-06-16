@@ -10,6 +10,8 @@ app = FastAPI()
 try:
     model = keras.models.load_model('src/models/augmented_andmark_model_v1.keras')
     scaler = joblib.load('src/artifacts/csv_model/augmented/scaler.pkl')
+
+    labels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'K', 'L', 'M','N','O','P','Q','R','S','T','U','V','X','Y'] 
 except Exception as e:
     raise RuntimeError(f"Error in loading model: {e}")
 
@@ -21,7 +23,7 @@ class LandmarkInput(BaseModel):
 def predict_landmarks(data: LandmarkInput):
     try:
         if len(data.landmarks) != 63:
-            raise HTTPException(status_code=400, detail="Expected 42 values for landmarks.")
+            raise HTTPException(status_code=400, detail="Expected 63 values for landmarks.")
         
         input_array = np.array(data.landmarks).reshape(1,-1)
         input_scaled = scaler.transform(input_array)
@@ -30,6 +32,14 @@ def predict_landmarks(data: LandmarkInput):
         predicted_class = int(np.argmax(prediction))
         confidence = float(np.max(prediction))
 
-        return {"class": predicted_class, "confidence":confidence}
+        return {
+            "class": predicted_class,
+            "letter": labels[predicted_class],
+            "confidence": confidence
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+@app.get("/health")
+def healthcheck():
+    return {"status": "ok"}
