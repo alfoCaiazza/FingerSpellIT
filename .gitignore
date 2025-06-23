@@ -12,3 +12,4 @@ src/scripts/logs
 # in-the-wild full frame folder
 tests/in_the_wild/image_folders
 tests/in_the_wild/hands_frame
+tests/in_the_wild/processed_imgs
