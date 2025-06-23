@@ -8,3 +8,6 @@ src/data/raw_imgs
 # Data readme.txt
 src/data/readme.txt
 src/scripts/logs
+
+# in-the-wild full frame folder
+tests/in_the_wild/image_folders
