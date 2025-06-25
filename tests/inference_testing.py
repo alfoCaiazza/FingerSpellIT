@@ -17,7 +17,8 @@ MODEL_DIR = os.path.join( 'src', 'models')
 RESNET_PATH = os.path.join(MODEL_DIR, 'augmented_image_model_v1.keras')
 MLP_PATH = os.path.join(MODEL_DIR, 'augmented_andmark_model_v1.keras')
 TEST_IMAGE_PATH = os.path.join('src', 'data', 'raw_imgs', 'splits', 'test')
-IN_THE_WILD_IMAGE_PATH = os.path.join('tests', 'in_the_wild', 'processed_imgs') # CAMBIA PATH PER TEST
+IN_THE_WILD_IMAGE_PATH_BASE = os.path.join('src', 'data', 'raw_imgs', 'splits', 'test')
+IN_THE_WILD_IMAGE_PATH_CRITIC = os.path.join('tests', 'in_the_wild', 'processed_imgs') 
 HAND_LANDMARK_TASK_PATH = os.path.join('src','artifacts','hand_landmarker.task')
 
 # Initializing scaler and label econder for mlp model
@@ -169,24 +170,42 @@ test_image_paths = [os.path.join(TEST_IMAGE_PATH, label, fname) for label, fname
 if not test_images:
     raise RuntimeError("No image found in TEST_IMAGE_PATH")
 
-in_the_wild_images, in_the_wild_labels, in_the_wild_filenames = load_images_from_folder(IN_THE_WILD_IMAGE_PATH)
-in_the_wild_data = list(zip(in_the_wild_images, in_the_wild_labels, in_the_wild_filenames))
-test_pairs = [(img, label) for img, label, _ in in_the_wild_data]
+# Loading base images
+in_the_wild_images_base, in_the_wild_labels_base, in_the_wild_filenames_base = load_images_from_folder(IN_THE_WILD_IMAGE_PATH_BASE)
+in_the_wild_data_base = list(zip(in_the_wild_images_base, in_the_wild_labels_base, in_the_wild_filenames_base))
+test_pairs_base = [(img, label) for img, label, _ in in_the_wild_data_base]
 
-in_the_wild_image_paths = [
-    os.path.join(IN_THE_WILD_IMAGE_PATH, label, fname)
-    for _, label, fname in in_the_wild_data
+in_the_wild_image_paths_base = [
+    os.path.join(IN_THE_WILD_IMAGE_PATH_BASE, label, fname)
+    for _, label, fname in in_the_wild_data_base
+]
+
+# Loading critic images
+in_the_wild_images_critic, in_the_wild_labels_critic, in_the_wild_filenames_critic = load_images_from_folder(IN_THE_WILD_IMAGE_PATH_CRITIC)
+in_the_wild_data_critic = list(zip(in_the_wild_images_critic, in_the_wild_labels_critic, in_the_wild_filenames_critic))
+test_pairs_critic = [(img, label) for img, label, _ in in_the_wild_data_critic]
+
+in_the_wild_image_paths_critic = [
+    os.path.join(IN_THE_WILD_IMAGE_PATH_CRITIC, label, fname)
+    for _, label, fname in in_the_wild_data_critic
 ]
 
 # Benchmark Execution
 print("\n=== Benchmark ResNet ===")
+print("\n=== Latency ===")
 resnet_latency, resnet_cpu, resnet_success = benchmark_model(resnet_model, test_images, model_type='resnet')
-resnet_acc = test_failure_scenarios(resnet_model, 'resnet', test_pairs)
+print("\n=== Accuracy in Basic Scenarios ===")
+resnet_acc_base = test_failure_scenarios(resnet_model, 'resnet', test_pairs_base)
+print("\n=== Accuracy in Critic Scenarios ===")
+resnet_acc_critic = test_failure_scenarios(resnet_model, 'resnet', test_pairs_critic)
 
 print("\n=== Benchmark MediaPipe+MLP ===")
+print("\n=== Latency ===")
 mp_latency, mp_cpu, mp_success = benchmark_model(mlp_model, test_images, model_type='landmark', image_paths=test_image_paths)
-mlp_acc = test_failure_scenarios(mlp_model, 'landmark', test_pairs, image_paths=in_the_wild_image_paths)
-
+print("\n=== Accuracy in Basic Scenarios ===")
+mlp_acc_base = test_failure_scenarios(mlp_model, 'landmark', test_pairs_base, image_paths=in_the_wild_image_paths_base)
+print("\n=== Accuracy in Critic Scenarios ===")
+mlp_acc_critic = test_failure_scenarios(mlp_model, 'landmark', test_pairs_critic, image_paths=in_the_wild_image_paths_critic)
 
 # Results
 print("\n=== Results ===")
@@ -203,6 +222,10 @@ if not np.isnan(mp_latency) and not np.isnan(resnet_latency):
     speedup = resnet_latency / mp_latency
     print(f"\nSpeedup MediaPipe vs ResNet: {speedup:.2f}x")
 
-print("\nAccuracy")
-print(f"ResNet - Critic Scenarios Accuracy: {resnet_acc:.2%}")
-print(f"MediaPipe - Critic Scenarios Accuracy: {mlp_acc:.2%}")
+print("\nAccuracy - Basic Scenarios")
+print(f"ResNet : {resnet_acc_base:.2%}")
+print(f"MediaPip : {mlp_acc_base:.2%}")
+
+print("\nAccuracy - Critic Scenarios")
+print(f"ResNet : {resnet_acc_critic:.2%}")
+print(f"MediaPip : {mlp_acc_critic:.2%}")
